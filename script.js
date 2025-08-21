@@ -28,9 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.title.textContent = problem.question_title;
         ui.counter.textContent = `问题 ${index + 1} / ${problemsData.length}`;
         
-        // --- 关键修复：保留单个换行，移除多余空行 ---
+        // --- 关键修复：将 \n 替换为 <br> 并使用 innerHTML ---
         const originalContent = problem.question_content || '无内容。';
-        ui.content.textContent = originalContent.replace(/(\r\n|\n|\r)+/gm, "\n").trim();
+        // 1. 先将连续的换行符合并成一个
+        const collapsedContent = originalContent.replace(/(\r\n|\n|\r)+/gm, "\n").trim();
+        // 2. 再将单个换行符替换为HTML的 <br> 标签
+        ui.content.innerHTML = collapsedContent.replace(/\n/g, '<br>');
 
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
         currentAnnotationIndex = -1;

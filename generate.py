@@ -1,9 +1,9 @@
 import json
 import os
 
-def create_layout_fixed_tool():
+def create_final_fixed_tool():
     """
-    生成一个修复了题面换行和左侧栏布局问题的最终版静态网站工具。
+    生成一个最终修复了题面换行问题的静态网站工具。
     """
     project_dir = './'
     jsonl_file_path = '/home/fangz/project/require/test6_20.jsonl'
@@ -72,6 +72,7 @@ def create_layout_fixed_tool():
             </header>
             <div id="question-content" class="content-box"></div>
         </main>
+
         <aside class="right-panel">
             <h2>标注输入</h2>
             <div class="form-section">
@@ -148,28 +149,20 @@ hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
 #keywords-form label { font-weight: normal; margin-bottom: 10px; display: flex; align-items: center; }
 #keywords-form input { margin-right: 8px; }
 #info-box p { margin: 5px 0; }
-.content-box { white-space: pre-wrap; word-wrap: break-word; background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 4px; line-height: 1.7; }
+.content-box { /* white-space: pre-wrap; (不再需要) */ word-wrap: break-word; background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 4px; line-height: 1.7; }
 textarea, input { font-family: Arial, 'Heiti', 'Microsoft YaHei', sans-serif; }
 textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; margin-bottom: 10px; }
 .qa-pair { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
 .footer-controls { background: #fff; padding: 15px; text-align: center; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); position: sticky; bottom: 0; z-index: 10; }
 button, .explanation-link-btn { font-family: Arial, 'Heiti', 'Microsoft YaHei', sans-serif; padding: 10px 20px; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 1em; margin: 0; transition: background-color 0.2s; text-decoration: none; display: inline-block; }
-.footer-controls button { margin: 0 10px; } /* 只给底部的按钮加margin */
+.footer-controls button { margin: 0 10px; }
 #prev-btn, #next-btn { background-color: #1890ff; }
 #submit-btn { background-color: #52c41a; }
 #download-btn { background-color: #faad14; }
-#new-annotation-btn, .explanation-link-btn { width: auto; /* 让按钮宽度自适应内容 */ }
+#new-annotation-btn, .explanation-link-btn { width: auto; }
 #new-annotation-btn { background-color: #08979c; }
 .explanation-link-btn { background-color: #722ed1; }
-/* --- 关键修复：按钮容器使用flex布局实现右对齐 --- */
-.left-panel-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end; /* 让内部元素靠右对齐 */
-    gap: 10px;
-    margin-top: 10px;
-    margin-bottom: 20px;
-}
+.left-panel-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; margin-top: 10px; margin-bottom: 20px; }
 button:hover, .explanation-link-btn:hover { opacity: 0.8; }
 button:disabled { background-color: #ccc; cursor: not-allowed; }
 .annotation-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 5px; cursor: pointer; }
@@ -213,9 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.title.textContent = problem.question_title;
         ui.counter.textContent = `问题 ${index + 1} / ${problemsData.length}`;
         
-        // --- 关键修复：保留单个换行，移除多余空行 ---
+        // --- 关键修复：将 \\n 替换为 <br> 并使用 innerHTML ---
         const originalContent = problem.question_content || '无内容。';
-        ui.content.textContent = originalContent.replace(/(\\r\\n|\\n|\\r)+/gm, "\\n").trim();
+        // 1. 先将连续的换行符合并成一个
+        const collapsedContent = originalContent.replace(/(\\r\\n|\\n|\\r)+/gm, "\\n").trim();
+        // 2. 再将单个换行符替换为HTML的 <br> 标签
+        ui.content.innerHTML = collapsedContent.replace(/\\n/g, '<br>');
 
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
         currentAnnotationIndex = -1;
@@ -387,4 +383,4 @@ document.addEventListener('DOMContentLoaded', () => {
     print(f"  请在浏览器中打开 '{os.path.join(project_dir, 'index.html')}' 文件开始标注。")
 
 if __name__ == "__main__":
-    create_layout_fixed_tool()
+    create_final_fixed_tool()
