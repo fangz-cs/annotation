@@ -3,9 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const problemsData = JSON.parse(document.getElementById('problem-data').textContent);
     let annotations = JSON.parse(localStorage.getItem('annotations')) || {};
     let currentIndex = 0;
-    let currentAnnotationIndex = -1; // -1表示正在新建, >=0 表示正在编辑
+    let currentAnnotationIndex = -1; // -1 表示新建, >=0 表示编辑
 
-    // 获取DOM元素... (省略以保持简洁)
     const ui = {
         keywordsForm: document.getElementById('keywords-form'),
         infoBox: document.getElementById('info-box'),
@@ -51,22 +50,39 @@ document.addEventListener('DOMContentLoaded', () => {
         problemAnnotations.forEach((anno, index) => {
             const item = document.createElement('div');
             item.className = 'annotation-item';
-            // 使用标注创建时间作为标识
-            item.textContent = `标注 #${index + 1} (${new Date(anno.timestamp).toLocaleString()})`;
+            
+            const text = document.createElement('span');
+            text.textContent = `标注 #${index + 1} (${new Date(anno.timestamp).toLocaleTimeString()})`;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '删除';
+            
+            item.appendChild(text);
+            item.appendChild(deleteBtn);
+
             if (index === currentAnnotationIndex) {
                 item.classList.add('active');
             }
-            item.addEventListener('click', () => {
+
+            text.addEventListener('click', () => {
                 currentAnnotationIndex = index;
-                renderAnnotationList(); // 重新渲染列表以更新高亮
+                renderAnnotationList();
                 clearAndLoadForm();
             });
+
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm(`确定要删除“标注 #${index + 1}”吗？此操作无法撤销。`)) {
+                    deleteAnnotation(index);
+                }
+            });
+
             ui.annotationList.appendChild(item);
         });
     }
 
     function clearAndLoadForm() {
-        // 清空表单
         ui.keywordsForm.querySelectorAll('input').forEach(i => i.checked = false);
         ui.modifiedContent.value = '';
         [ui.q1, ui.a1, ui.q2, ui.a2, ui.q3, ui.a3].forEach(el => el.value = '');
@@ -76,12 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentAnnotationIndex !== -1 && problemAnnotations[currentAnnotationIndex]) {
             const data = problemAnnotations[currentAnnotationIndex];
-            // 加载 keywords
             data.keywords.forEach(kw => {
                 const cb = ui.keywordsForm.querySelector(`input[value="${kw}"]`);
                 if (cb) cb.checked = true;
             });
-            // 加载其他字段
             ui.modifiedContent.value = data.modified_content || '';
             data.qa_pairs.forEach((pair, i) => {
                 if (i < 3) {
@@ -90,6 +104,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+    }
+    
+    function deleteAnnotation(indexToDelete) {
+        const problemId = problemsData[currentIndex].question_id;
+        annotations[problemId].splice(indexToDelete, 1);
+
+        if (annotations[problemId].length === 0) {
+            delete annotations[problemId];
+        }
+
+        localStorage.setItem('annotations', JSON.stringify(annotations));
+        
+        if (currentAnnotationIndex === indexToDelete) {
+            currentAnnotationIndex = -1;
+            clearAndLoadForm();
+        } else if (currentAnnotationIndex > indexToDelete) {
+            currentAnnotationIndex--;
+        }
+
+        renderAnnotationList();
     }
     
     function saveCurrentAnnotation() {
@@ -113,22 +147,22 @@ document.addEventListener('DOMContentLoaded', () => {
             qa_pairs: qa_pairs
         };
 
-        if (currentAnnotationIndex === -1) { // 新建
+        if (currentAnnotationIndex === -1) {
             annotations[problemId].push(annotationData);
-            currentAnnotationIndex = annotations[problemId].length - 1; // 自动选中新建的这个
-        } else { // 更新
+            currentAnnotationIndex = annotations[problemId].length - 1;
+        } else {
             annotations[problemId][currentAnnotationIndex] = annotationData;
         }
 
         localStorage.setItem('annotations', JSON.stringify(annotations));
         alert(`标注已保存！`);
-        renderAnnotationList(); // 保存后刷新列表
+        renderAnnotationList();
     }
     
     ui.newAnnotationBtn.addEventListener('click', () => {
-        currentAnnotationIndex = -1; // 设置为“新建”模式
+        currentAnnotationIndex = -1;
         clearAndLoadForm();
-        renderAnnotationList(); // 取消列表中所有项的高亮
+        renderAnnotationList();
         ui.modifiedContent.focus();
     });
 
@@ -137,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.prevBtn.addEventListener('click', () => {
         if (currentIndex > 0) {
             currentIndex--;
-            currentAnnotationIndex = -1; // 切换问题时重置
+            currentAnnotationIndex = -1;
             renderProblem(currentIndex);
         }
     });
@@ -145,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.nextBtn.addEventListener('click', () => {
         if (currentIndex < problemsData.length - 1) {
             currentIndex++;
-            currentAnnotationIndex = -1; // 切换问题时重置
+            currentAnnotationIndex = -1;
             renderProblem(currentIndex);
         }
     });
@@ -160,11 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const blob = new Blob([content], { type: 'application/jsonl' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'annotations_multiple.jsonl';
+        a.download = 'annotations_final.jsonl';
         a.click();
         URL.revokeObjectURL(a.href);
     });
 
-    // 初始加载
     renderProblem(currentIndex);
 });
