@@ -27,8 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const problem = problemsData[index];
         ui.title.textContent = problem.question_title;
         ui.counter.textContent = `问题 ${index + 1} / ${problemsData.length}`;
+        
+        // --- 关键修复：保留单个换行，移除多余空行 ---
         const originalContent = problem.question_content || '无内容。';
-        ui.content.textContent = originalContent.replace(/(\r\n|\n|\r)/gm, " ");
+        ui.content.textContent = originalContent.replace(/(\r\n|\n|\r)+/gm, "\n").trim();
+
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
         currentAnnotationIndex = -1;
         renderAnnotationList();

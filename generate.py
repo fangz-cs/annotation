@@ -1,9 +1,9 @@
 import json
 import os
 
-def create_perfect_annotation_tool():
+def create_layout_fixed_tool():
     """
-    生成一个修复了所有已知问题（包括歧义选项框的换行符和日期显示）的最终版静态网站工具。
+    生成一个修复了题面换行和左侧栏布局问题的最终版静态网站工具。
     """
     project_dir = './'
     jsonl_file_path = '/home/fangz/project/require/test6_20.jsonl'
@@ -39,7 +39,6 @@ def create_perfect_annotation_tool():
         return
 
     # --- HTML 模板 ---
-    # --- 关键修复在这里：将 '\\n'.join 改为 ''.join ---
     checkboxes_html = "".join([f'            <label><input type="checkbox" name="ambiguity" value="{kw}"> {kw}</label>' for kw in ambiguity_keywords])
     index_html_content = f"""
 <!DOCTYPE html>
@@ -47,7 +46,7 @@ def create_perfect_annotation_tool():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>完美版问题标注工具</title>
+    <title>annotation</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -55,8 +54,10 @@ def create_perfect_annotation_tool():
         <aside class="left-panel">
             <h2>已有标注</h2>
             <div id="annotation-list" class="form-section"></div>
-            <button id="new-annotation-btn">新建标注</button>
-            <a href="explanations.html" target="_blank" class="explanation-link-btn">查看歧义类型定义</a>
+            <div class="left-panel-actions">
+                <button id="new-annotation-btn">新建标注</button>
+                <a href="explanations.html" target="_blank" class="explanation-link-btn">查看歧义类型定义</a>
+            </div>
             <hr>
             <h2>歧义类型</h2>
             <div id="keywords-form" class="form-section">{checkboxes_html}</div>
@@ -71,7 +72,6 @@ def create_perfect_annotation_tool():
             </header>
             <div id="question-content" class="content-box"></div>
         </main>
-
         <aside class="right-panel">
             <h2>标注输入</h2>
             <div class="form-section">
@@ -110,7 +110,6 @@ def create_perfect_annotation_tool():
 """
 
     # --- 解释页面 (explanations.html) ---
-    # --- 关键修复在这里：将 '\\n'.join 改为 ''.join ---
     explanations_html_list = []
     for title, desc in ambiguity_definitions:
         explanations_html_list.append(f'        <div class="definition-item"><h3>{title}</h3><p>{desc}</p></div>')
@@ -154,12 +153,23 @@ textarea, input { font-family: Arial, 'Heiti', 'Microsoft YaHei', sans-serif; }
 textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; margin-bottom: 10px; }
 .qa-pair { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
 .footer-controls { background: #fff; padding: 15px; text-align: center; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); position: sticky; bottom: 0; z-index: 10; }
-button, .explanation-link-btn { font-family: Arial, 'Heiti', 'Microsoft YaHei', sans-serif; padding: 10px 20px; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 1em; margin: 0 10px; transition: background-color 0.2s; text-decoration: none; display: inline-block; }
+button, .explanation-link-btn { font-family: Arial, 'Heiti', 'Microsoft YaHei', sans-serif; padding: 10px 20px; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 1em; margin: 0; transition: background-color 0.2s; text-decoration: none; display: inline-block; }
+.footer-controls button { margin: 0 10px; } /* 只给底部的按钮加margin */
 #prev-btn, #next-btn { background-color: #1890ff; }
 #submit-btn { background-color: #52c41a; }
 #download-btn { background-color: #faad14; }
-#new-annotation-btn { width: 100%; background-color: #08979c; margin-top: 10px;}
-.explanation-link-btn { width: calc(100% - 20px); text-align: center; background-color: #722ed1; margin-top: 10px; margin-bottom: 20px; }
+#new-annotation-btn, .explanation-link-btn { width: auto; /* 让按钮宽度自适应内容 */ }
+#new-annotation-btn { background-color: #08979c; }
+.explanation-link-btn { background-color: #722ed1; }
+/* --- 关键修复：按钮容器使用flex布局实现右对齐 --- */
+.left-panel-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* 让内部元素靠右对齐 */
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
 button:hover, .explanation-link-btn:hover { opacity: 0.8; }
 button:disabled { background-color: #ccc; cursor: not-allowed; }
 .annotation-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 5px; cursor: pointer; }
@@ -202,8 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const problem = problemsData[index];
         ui.title.textContent = problem.question_title;
         ui.counter.textContent = `问题 ${index + 1} / ${problemsData.length}`;
+        
+        // --- 关键修复：保留单个换行，移除多余空行 ---
         const originalContent = problem.question_content || '无内容。';
-        ui.content.textContent = originalContent.replace(/(\\r\\n|\\n|\\r)/gm, " ");
+        ui.content.textContent = originalContent.replace(/(\\r\\n|\\n|\\r)+/gm, "\\n").trim();
+
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
         currentAnnotationIndex = -1;
         renderAnnotationList();
@@ -370,8 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
     with open(os.path.join(project_dir, 'style.css'), 'w', encoding='utf-8') as f: f.write(css_content)
     with open(os.path.join(project_dir, 'script.js'), 'w', encoding='utf-8') as f: f.write(js_content)
         
-    print(f"✓ 完美版专业标注工具套件已成功生成在 '{project_dir}' 文件夹中！")
+    print(f"✓ 最终版专业标注工具套件已成功生成在 '{project_dir}' 文件夹中！")
     print(f"  请在浏览器中打开 '{os.path.join(project_dir, 'index.html')}' 文件开始标注。")
 
 if __name__ == "__main__":
-    create_perfect_annotation_tool()
+    create_layout_fixed_tool()
