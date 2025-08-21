@@ -1,23 +1,21 @@
 import json
 import os
 
-def create_pro_annotation_tool_final():
+def create_final_pro_tool():
     """
-    生成一个具有专业字体、支持多次标注且包含完整删除功能的静态网站工具。
+    生成一个具有最终版歧义类型、移除题面换行、专业字体、
+    支持多次标注且包含删除功能的静态网站工具。
     """
     project_dir = './'
     jsonl_file_path = '/home/fangz/project/require/test6_20.jsonl'
 
-    # 定义歧义类型
+    # --- 1. 更新为最新的15个歧义类型 ---
     ambiguity_keywords = [
-        "Lexical Ambiguity (词义歧义)", "Syntactic Ambiguity (语法歧义)",
-        "Semantic Ambiguity (语义歧义)", "Scope Ambiguity (范围歧义)",
-        "Anaphora Ambiguity (指代不清)", "Incomplete Information (信息不全)",
-        "Implied Context (隐含上下文)", "Contradictory Statements (描述矛盾)",
-        "Vague Quantification (量化模糊)", "Unclear Constraints (约束不明)",
-        "Formatting Issues (格式问题)", "Example-Problem Mismatch (示例与题目不符)",
-        "Edge Case Unspecified (边界情况未定义)", "Typographical Error (拼写或打字错误)",
-        "Cultural/Domain-specific Jargon (文化/领域术语)"
+        "术语定义", "功能与副作用", "输入域与非法值",
+        "输出判定与格式", "边界与极端值", "索引与区间",
+        "排序并列与稳定性", "字符串与归一化", "时间与时区/DST",
+        "单位与量纲", "精度/容差与舍入", "随机性与复现",
+        "数据结构语义（集/多集/图）", "并发/时序/原子性", "规模/性能与资源"
     ]
     
     # 读取原始问题数据
@@ -39,7 +37,7 @@ def create_pro_annotation_tool_final():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专业版问题标注工具 (最终版)</title>
+    <title>最终版问题标注工具</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -100,7 +98,7 @@ def create_pro_annotation_tool_final():
 </html>
 """
 
-    # --- CSS 样式 (包含字体设置) ---
+    # --- CSS 样式 ---
     css_content = """
 body { 
     font-family: Arial, 'Heiti', 'Microsoft YaHei', sans-serif;
@@ -133,13 +131,13 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 .delete-btn { background-color: #f5222d; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.8em; }
 """
 
-    # --- JavaScript 逻辑 (修复后，包含完整的删除功能) ---
+    # --- JavaScript 逻辑 ---
     js_content = """
 document.addEventListener('DOMContentLoaded', () => {
     const problemsData = JSON.parse(document.getElementById('problem-data').textContent);
     let annotations = JSON.parse(localStorage.getItem('annotations')) || {};
     let currentIndex = 0;
-    let currentAnnotationIndex = -1; // -1 表示新建, >=0 表示编辑
+    let currentAnnotationIndex = -1;
 
     const ui = {
         keywordsForm: document.getElementById('keywords-form'),
@@ -163,10 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const problem = problemsData[index];
         ui.title.textContent = problem.question_title;
         ui.counter.textContent = `问题 ${index + 1} / ${problemsData.length}`;
-        ui.content.textContent = problem.question_content;
+        
+        // --- 2. 移除题面换行符 ---
+        const originalContent = problem.question_content || '无内容。';
+        ui.content.textContent = originalContent.replace(/(\\r\\n|\\n|\\r)/gm, " ");
+
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
         
-        currentAnnotationIndex = -1; // 切换问题时重置选中状态
+        currentAnnotationIndex = -1;
         renderAnnotationList();
         clearAndLoadForm();
 
@@ -204,12 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             text.addEventListener('click', () => {
                 currentAnnotationIndex = index;
-                renderAnnotationList(); // 重新渲染以更新高亮
+                renderAnnotationList();
                 clearAndLoadForm();
             });
 
             deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // 防止点击删除时触发父元素的选中事件
+                e.stopPropagation();
                 if (confirm(`确定要删除“标注 #${index + 1}”吗？此操作无法撤销。`)) {
                     deleteAnnotation(index);
                 }
@@ -220,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearAndLoadForm() {
-        // 清空表单
         ui.keywordsForm.querySelectorAll('input').forEach(i => i.checked = false);
         ui.modifiedContent.value = '';
         [ui.q1, ui.a1, ui.q2, ui.a2, ui.q3, ui.a3].forEach(el => el.value = '');
@@ -228,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const problemId = problemsData[currentIndex].question_id;
         const problemAnnotations = annotations[problemId] || [];
 
-        // 如果是编辑模式，则加载数据
         if (currentAnnotationIndex !== -1 && problemAnnotations[currentAnnotationIndex]) {
             const data = problemAnnotations[currentAnnotationIndex];
             data.keywords.forEach(kw => {
@@ -255,16 +255,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         localStorage.setItem('annotations', JSON.stringify(annotations));
         
-        // 如果删除的是当前选中的标注，重置为新建模式
         if (currentAnnotationIndex === indexToDelete) {
             currentAnnotationIndex = -1;
             clearAndLoadForm();
         } else if (currentAnnotationIndex > indexToDelete) {
-            // 如果删除的是选中的标注之前的项，索引要减一
             currentAnnotationIndex--;
         }
 
-        renderAnnotationList(); // 重新渲染列表
+        renderAnnotationList();
     }
     
     function saveCurrentAnnotation() {
@@ -288,10 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
             qa_pairs: qa_pairs
         };
 
-        if (currentAnnotationIndex === -1) { // 新建
+        if (currentAnnotationIndex === -1) {
             annotations[problemId].push(annotationData);
             currentAnnotationIndex = annotations[problemId].length - 1;
-        } else { // 更新
+        } else {
             annotations[problemId][currentAnnotationIndex] = annotationData;
         }
 
@@ -301,9 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     ui.newAnnotationBtn.addEventListener('click', () => {
-        currentAnnotationIndex = -1; // 切换到新建模式
-        renderAnnotationList(); // 更新高亮
-        clearAndLoadForm(); // 清空表单
+        currentAnnotationIndex = -1;
+        renderAnnotationList();
+        clearAndLoadForm();
         ui.modifiedContent.focus();
     });
 
@@ -338,7 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(a.href);
     });
 
-    // 初始加载
     renderProblem(currentIndex);
 });
 """
@@ -348,8 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
     with open(os.path.join(project_dir, 'style.css'), 'w', encoding='utf-8') as f: f.write(css_content)
     with open(os.path.join(project_dir, 'script.js'), 'w', encoding='utf-8') as f: f.write(js_content)
         
-    print(f"✓ 专业版标注工具网站已成功生成在 '{project_dir}' 文件夹中！")
+    print(f"✓ 最终版专业标注工具网站已成功生成在 '{project_dir}' 文件夹中！")
     print(f"  请在浏览器中打开 '{os.path.join(project_dir, 'index.html')}' 文件开始标注。")
 
 if __name__ == "__main__":
-    create_pro_annotation_tool_final()
+    create_final_pro_tool()
