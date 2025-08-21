@@ -27,17 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const problem = problemsData[index];
         ui.title.textContent = problem.question_title;
         ui.counter.textContent = `问题 ${index + 1} / ${problemsData.length}`;
-        
-        // --- 2. 移除题面换行符 ---
         const originalContent = problem.question_content || '无内容。';
         ui.content.textContent = originalContent.replace(/(\r\n|\n|\r)/gm, " ");
-
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
-        
         currentAnnotationIndex = -1;
         renderAnnotationList();
         clearAndLoadForm();
-
         ui.prevBtn.disabled = index === 0;
         ui.nextBtn.disabled = index === problemsData.length - 1;
     }
@@ -55,14 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         problemAnnotations.forEach((anno, index) => {
             const item = document.createElement('div');
             item.className = 'annotation-item';
-            
             const text = document.createElement('span');
-            text.textContent = `标注 #${index + 1} (${new Date(anno.timestamp).toLocaleTimeString()})`;
-            
+            const timeString = new Date(anno.timestamp).toISOString().substr(11, 8);
+            text.textContent = `标注 #${index + 1} (${timeString})`;
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn';
             deleteBtn.textContent = '删除';
-            
             item.appendChild(text);
             item.appendChild(deleteBtn);
 
@@ -114,20 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function deleteAnnotation(indexToDelete) {
         const problemId = problemsData[currentIndex].question_id;
         annotations[problemId].splice(indexToDelete, 1);
-
         if (annotations[problemId].length === 0) {
             delete annotations[problemId];
         }
-
         localStorage.setItem('annotations', JSON.stringify(annotations));
-        
         if (currentAnnotationIndex === indexToDelete) {
             currentAnnotationIndex = -1;
             clearAndLoadForm();
         } else if (currentAnnotationIndex > indexToDelete) {
             currentAnnotationIndex--;
         }
-
         renderAnnotationList();
     }
     
@@ -174,17 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.submitBtn.addEventListener('click', saveCurrentAnnotation);
 
     ui.prevBtn.addEventListener('click', () => {
-        if (currentIndex > 0) {
-            currentIndex--;
-            renderProblem(currentIndex);
-        }
+        if (currentIndex > 0) { currentIndex--; renderProblem(currentIndex); }
     });
 
     ui.nextBtn.addEventListener('click', () => {
-        if (currentIndex < problemsData.length - 1) {
-            currentIndex++;
-            renderProblem(currentIndex);
-        }
+        if (currentIndex < problemsData.length - 1) { currentIndex++; renderProblem(currentIndex); }
     });
 
     ui.downloadBtn.addEventListener('click', () => {

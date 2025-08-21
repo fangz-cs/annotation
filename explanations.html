@@ -1,0 +1,16 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歧义类型定义</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="explanation-page">
+    <div class="explanation-container">
+        <h1>歧义类型定义与解释</h1>
+        <div class="definition-item"><h3>术语与关键概念</h3><p>未定义或多义的名词、动词、状态（如“会话”“任务完成”）。常问：术语是否有唯一定义？与域内标准一致吗？</p></div>        <div class="definition-item"><h3>目标/功能与副作用</h3><p>函数是否纯？是否修改输入/全局状态/文件系统？</p></div>        <div class="definition-item"><h3>输入域与非法输入处理</h3><p>取值范围、空输入、越界、无效格式如何处理；是否“输入保证合法”。</p></div>        <div class="definition-item"><h3>输出判定与格式</h3><p>唯一答案还是“任一可行解”；空格/大小写/换行/小数位数等格式契约。</p></div>        <div class="definition-item"><h3>边界条件/极端情形</h3><p>= / > / ≥ / 闭开区间、空集合、单元素、全相等、最大/最小规模等。</p></div>        <div class="definition-item"><h3>索引与区间语义</h3><p>0/1 基、是否含端点、切片半开/闭区间。</p></div>        <div class="definition-item"><h3>排序/比较/并列与稳定性</h3><p>字典序 vs 数值序、是否稳定、并列如何打破（次关键字）。</p></div>        <div class="definition-item"><h3>字符串与本地化</h3><p>大小写折叠、Unicode 归一化（UAX#15）、排序/比较（UTS#10/UCA）、空白与标点、全半角。</p></div>        <div class="definition-item"><h3>时间/日期/时区/DST</h3><p>输入/输出格式、时区、夏令时、区间闭开；建议以 RFC 3339（ISO 8601 profile） 明确化。</p></div>        <div class="definition-item"><h3>单位/量纲与前缀</h3><p>ms vs s，MB vs MiB（IEC/ NIST 定义），角度 vs 弧度。</p></div>        <div class="definition-item"><h3>数值精度/误差与舍入</h3><p>浮点比较是否给容差（eps）、舍入方式，或改为有理数/整数化；对齐 IEEE-754 语义。</p></div>        <div class="definition-item"><h3>随机性与复现</h3><p>是否固定随机种子、输出是否允许任意解或需“字典序最小”等可复验准则。</p></div>        <div class="definition-item"><h3>数据结构语义</h3><p>集合/多重集/序列是否去重；图是否有向、允许自环/重边、是否连通。</p></div>        <div class="definition-item"><h3>并发/时序/原子性</h3><p>“同时发生”还是“按顺序处理”；先收礼后送礼这类单步内顺序。</p></div>        <div class="definition-item"><h3>规模/性能与资源约束</h3><p>N、M 上界，时间/空间复杂度、内存与 I/O 限制；避免只写“较大/尽可能快”这类不可验证表述。</p></div>
+    </div>
+</body>
+</html>
