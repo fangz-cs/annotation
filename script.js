@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.content.textContent = problem.question_content;
         ui.infoBox.innerHTML = `<p><strong>ID:</strong> ${problem.question_id}</p><p><strong>Platform:</strong> ${problem.platform}</p>`;
         
+        currentAnnotationIndex = -1; // 切换问题时重置选中状态
         renderAnnotationList();
         clearAndLoadForm();
 
@@ -67,12 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             text.addEventListener('click', () => {
                 currentAnnotationIndex = index;
-                renderAnnotationList();
+                renderAnnotationList(); // 重新渲染以更新高亮
                 clearAndLoadForm();
             });
 
             deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // 防止点击删除时触发父元素的选中事件
                 if (confirm(`确定要删除“标注 #${index + 1}”吗？此操作无法撤销。`)) {
                     deleteAnnotation(index);
                 }
@@ -83,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearAndLoadForm() {
+        // 清空表单
         ui.keywordsForm.querySelectorAll('input').forEach(i => i.checked = false);
         ui.modifiedContent.value = '';
         [ui.q1, ui.a1, ui.q2, ui.a2, ui.q3, ui.a3].forEach(el => el.value = '');
@@ -90,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const problemId = problemsData[currentIndex].question_id;
         const problemAnnotations = annotations[problemId] || [];
 
+        // 如果是编辑模式，则加载数据
         if (currentAnnotationIndex !== -1 && problemAnnotations[currentAnnotationIndex]) {
             const data = problemAnnotations[currentAnnotationIndex];
             data.keywords.forEach(kw => {
@@ -116,14 +119,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         localStorage.setItem('annotations', JSON.stringify(annotations));
         
+        // 如果删除的是当前选中的标注，重置为新建模式
         if (currentAnnotationIndex === indexToDelete) {
             currentAnnotationIndex = -1;
             clearAndLoadForm();
         } else if (currentAnnotationIndex > indexToDelete) {
+            // 如果删除的是选中的标注之前的项，索引要减一
             currentAnnotationIndex--;
         }
 
-        renderAnnotationList();
+        renderAnnotationList(); // 重新渲染列表
     }
     
     function saveCurrentAnnotation() {
@@ -147,10 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
             qa_pairs: qa_pairs
         };
 
-        if (currentAnnotationIndex === -1) {
+        if (currentAnnotationIndex === -1) { // 新建
             annotations[problemId].push(annotationData);
             currentAnnotationIndex = annotations[problemId].length - 1;
-        } else {
+        } else { // 更新
             annotations[problemId][currentAnnotationIndex] = annotationData;
         }
 
@@ -160,9 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     ui.newAnnotationBtn.addEventListener('click', () => {
-        currentAnnotationIndex = -1;
-        clearAndLoadForm();
-        renderAnnotationList();
+        currentAnnotationIndex = -1; // 切换到新建模式
+        renderAnnotationList(); // 更新高亮
+        clearAndLoadForm(); // 清空表单
         ui.modifiedContent.focus();
     });
 
@@ -171,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.prevBtn.addEventListener('click', () => {
         if (currentIndex > 0) {
             currentIndex--;
-            currentAnnotationIndex = -1;
             renderProblem(currentIndex);
         }
     });
@@ -179,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.nextBtn.addEventListener('click', () => {
         if (currentIndex < problemsData.length - 1) {
             currentIndex++;
-            currentAnnotationIndex = -1;
             renderProblem(currentIndex);
         }
     });
@@ -199,5 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(a.href);
     });
 
+    // 初始加载
     renderProblem(currentIndex);
 });
